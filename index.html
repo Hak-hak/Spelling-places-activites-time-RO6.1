@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Practice Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8e44ad;
+            --primary-hover: #9b59b6;
+            --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --text-color: #333;
+            --light-text: #666;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            background: var(--background-gradient);
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            overflow-x: hidden;
+            color: var(--text-color);
+        }
+
+        #game-container {
+            text-align: center;
+            background: white;
+            padding: 25px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 650px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            font-size: clamp(20px, 5vw, 28px);
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        p {
+            font-size: clamp(14px, 4vw, 16px);
+            line-height: 1.6;
+            margin-top: 0;
+        }
+
+        input[type="text"] {
+            padding: 12px 15px;
+            font-size: clamp(14px, 4vw, 16px);
+            width: 100%;
+            max-width: 450px;
+            margin: 15px 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(142, 68, 173, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: clamp(14px, 4vw, 16px);
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            touch-action: manipulation;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+
+        #hint {
+            color: var(--light-text);
+            font-style: italic;
+            margin-top: 15px;
+            font-size: clamp(13px, 3.5vw, 15px);
+            user-select: none;
+            line-height: 1.5;
+            min-height: 22px;
+        }
+
+        #completion, #result {
+            font-size: clamp(14px, 4vw, 18px);
+            font-weight: 600;
+            margin-top: 15px;
+            min-height: 27px;
+        }
+        
+        #result.correct {
+            color: var(--success-color);
+        }
+        
+        #result.incorrect {
+            color: var(--error-color);
+        }
+
+        .particle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes firework {
+            0% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty));
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Spelling Practice Game</h1>
+        <p>Click Start to begin the game!</p>
+        <button onclick="startGame()">Start</button>
+    </div>
+
+    <script>
+        // Data for the game with 46 sentences
+        const sentences = [
+            { english: "I go to the cinema to watch movies." },
+            { english: "We play games at the shopping centre." },
+            { english: "My brother trains at the sports centre every afternoon." },
+            { english: "I swim at the swimming pool on Sundays." },
+            { english: "They walk their dog in the park." },
+            { english: "We see lions and tigers at the zoo." },
+            { english: "I read books in the library after school." },
+            { english: "Mum buys food at the supermarket." },
+            { english: "I help my mum cook meals every evening." },
+            { english: "My sister does yoga in the morning." },
+            { english: "They play tennis at the weekend." },
+            { english: "I watch films with my family." },
+            { english: "We go shopping on Saturdays." },
+            { english: "I visit my grandparents every Sunday." },
+            { english: "He likes to play games on the computer." },
+            { english: "She can ride a bike very well." },
+            { english: "I listen to music when I do my homework." },
+            { english: "I love the weekend because I can relax." },
+            { english: "We go to the beach on Saturday." },
+            { english: "I stay at home on Sunday." },
+            { english: "We visited a museum last weekend." },
+            { english: "I like playing on the beach." },
+            { english: "They climbed a mountain last summer." },
+            { english: "We had fun in the countryside." },
+            { english: "We stayed on a beautiful island." },
+            { english: "We slept at a hotel by the sea." },
+            { english: "I love going to the amusement park." },
+            { english: "I bought a book at the bookshop." },
+            { english: "She got some bread at the bakery." },
+            { english: "We ate lunch at a nice restaurant." },
+            { english: "I want to travel around the world." },
+            { english: "They swim in the lake every summer." },
+            { english: "We sunbathe on the beach." },
+            { english: "I take photos of flowers and animals." },
+            { english: "They build sandcastles at the seaside." },
+            { english: "We go camping in the forest." },
+            { english: "How about having a picnic in the park!" },
+            { english: "I relax in my room after school." },
+            { english: "I went to Hanoi by plane." },
+            { english: "They travelled to Hue by train." },
+            { english: "My dad drives a car to work." },
+            { english: "I take the bus to school." },
+            { english: "We went across the river by boat." },
+            { english: "My uncle rides a motorbike." },
+            { english: "She likes playing pickleball." },
+            { english: "They spend much money on that game." }
+        ];
+
+        let currentSentenceIndex = 0;
+        let completedCount = 0;
+        let isPlaying = false;
+        let autoPlayInterval;
+        let wrongAttempts = 0;
+        const TOTAL_SENTENCES = sentences.length;
+
+        // Function to create a firework effect on correct answer
+        function createFirework() {
+            const input = document.getElementById('userInput');
+            if (!input) return;
+            const gameContainer = document.getElementById('game-container');
+            const inputRect = input.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+            const x = inputRect.left - containerRect.left + inputRect.width / 2;
+            const y = inputRect.top - containerRect.top + inputRect.height / 2;
+            
+            const fireworkColors = ['#8e44ad', '#9b59b6', '#667eea', '#764ba2', '#2ecc71', '#f1c40f'];
+
+            for (let i = 0; i < 100; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const angle = Math.random() * 2 * Math.PI;
+                const distance = Math.random() * 150 + 50;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                particle.style.backgroundColor = fireworkColors[Math.floor(Math.random() * fireworkColors.length)];
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                particle.style.setProperty('--tx', `${tx}px`);
+                particle.style.setProperty('--ty', `${ty}px`);
+                particle.style.animation = `firework ${Math.random() * 0.5 + 0.5}s ease-out forwards`;
+                gameContainer.appendChild(particle);
+                setTimeout(() => particle.remove(), 1000);
+            }
+        }
+
+        // Function to play the current sentence using Web Speech API
+        function playSentence() {
+            if (!isPlaying && sentences[currentSentenceIndex]) {
+                isPlaying = true;
+                const utterance = new SpeechSynthesisUtterance(sentences[currentSentenceIndex].english);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                utterance.onend = () => {
+                    isPlaying = false;
+                };
+                speechSynthesis.speak(utterance);
+            }
+        }
+        
+        // Autoplay the sentence sound
+        function startAutoPlay() {
+            if (autoPlayInterval) clearInterval(autoPlayInterval);
+            autoPlayInterval = setInterval(() => {
+                if (!isPlaying) {
+                    playSentence();
+                }
+            }, 5000); // Repeat every 5 seconds
+        }
+
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+            }
+        }
+
+        // Check the user's answer
+        function checkAnswer() {
+            const userInput = document.getElementById('userInput').value.trim();
+            const result = document.getElementById('result');
+            const currentSentence = sentences[currentSentenceIndex].english;
+
+            // Normalize strings by removing punctuation for a more lenient check
+            const normalize = (str) => str.toLowerCase().replace(/[.,!?]/g, '');
+
+            if (normalize(userInput) === normalize(currentSentence)) {
+                stopAutoPlay();
+                result.textContent = "Correct!";
+                result.className = 'correct';
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(createFirework, i * 150);
+                }
+                wrongAttempts = 0;
+                
+                setTimeout(() => {
+                    currentSentenceIndex++;
+                    completedCount++;
+                    if (currentSentenceIndex >= TOTAL_SENTENCES) {
+                        document.getElementById('game-container').innerHTML = `<h1>Congratulations!</h1><p>You have completed all ${completedCount} sentences!</p><button onclick="resetGame()">Play Again</button>`;
+                    } else {
+                         updateGameScreen();
+                         playSentence();
+                         startAutoPlay();
+                    }
+                }, 2000);
+            } else {
+                wrongAttempts++;
+                result.textContent = `Incorrect, try again! (${3 - wrongAttempts} attempts left)`;
+                result.className = 'incorrect';
+                if (wrongAttempts >= 3) {
+                    stopAutoPlay();
+                    wrongAttempts = 0;
+                    result.textContent = "Moving to the next sentence...";
+                    setTimeout(() => {
+                        currentSentenceIndex++;
+                        if (currentSentenceIndex >= TOTAL_SENTENCES) {
+                            document.getElementById('game-container').innerHTML = `<h1>Game Over!</h1><p>You have completed ${completedCount} out of ${TOTAL_SENTENCES} sentences.</p><button onclick="resetGame()">Play Again</button>`;
+                        } else {
+                            updateGameScreen();
+                            playSentence();
+                            startAutoPlay();
+                        }
+                    }, 2000);
+                }
+            }
+        }
+        
+        // Update the game UI to the next sentence
+        function updateGameScreen() {
+             if (document.getElementById('userInput')) {
+                document.getElementById('userInput').value = '';
+                document.getElementById('hint').textContent = '';
+                document.getElementById('result').textContent = '';
+                document.getElementById('completion').textContent = `Completed: ${completedCount}/${TOTAL_SENTENCES}`;
+             }
+        }
+
+        function showHint() {
+            document.getElementById('hint').textContent = `Hint: ${sentences[currentSentenceIndex].english}`;
+        }
+
+        function clearHint() {
+            document.getElementById('hint').textContent = '';
+        }
+
+        // Initialize the game screen
+        function startGame() {
+            wrongAttempts = 0;
+            document.getElementById('game-container').innerHTML = `
+                <h1>Spelling Practice</h1>
+                <p>Listen carefully and type the sentence you hear.</p>
+                <input type="text" id="userInput" placeholder="Type the sentence here...">
+                <div class="button-group">
+                    <button onclick="playSentence()">&#9658; Play Sound</button>
+                    <button onclick="checkAnswer()">Check</button>
+                    <button onclick="showHint()">Hint</button>
+                    <button onclick="resetGame()">Reset Game</button>
+                </div>
+                <p id="completion">Completed: ${completedCount}/${TOTAL_SENTENCES}</p>
+                <p id="hint"></p>
+                <p id="result"></p>
+            `;
+            document.getElementById('userInput').addEventListener('focus', clearHint);
+            document.getElementById('userInput').addEventListener('keypress', handleKeyPress);
+            playSentence();
+            startAutoPlay();
+        }
+
+        // Reset the game to the initial state
+        function resetGame() {
+            stopAutoPlay();
+            currentSentenceIndex = 0;
+            completedCount = 0;
+            wrongAttempts = 0;
+            // Cancel any pending speech synthesis
+            speechSynthesis.cancel();
+            isPlaying = false;
+            
+            document.getElementById('game-container').innerHTML = `
+                <h1>Spelling Practice Game</h1>
+                <p>Click Start to begin the game!</p>
+                <button onclick="startGame()">Start</button>
+            `;
+        }
+        
+        // Allow submitting with the Enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        }
+    </script>
+</body>
+</html>
